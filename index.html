@@ -8,31 +8,33 @@
       body { margin: 0; overflow: hidden; }
       #overlay {
         position: absolute; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%;
-        display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8);
+        display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        background: rgba(0,0,0,0.8); color: white; font-family: sans-serif;
       }
       #start-btn {
-        padding: 20px 40px; font-size: 18px; background: #FF007A; color: white; border: none; border-radius: 50px; cursor: pointer; font-family: sans-serif;
+        padding: 20px 40px; font-size: 18px; background: #FF007A; color: white; 
+        border: none; border-radius: 50px; cursor: pointer; font-weight: bold; margin-bottom: 10px;
       }
     </style>
   </head>
   <body>
     <div id="overlay">
       <button id="start-btn">INICIAR EXPERIENCIA</button>
+      <p id="status">Esperando interacción...</p>
     </div>
 
-    <!-- El ?v=1 en el .mind obliga a cargar la versión actual -->
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind?v=1.1;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <!-- El ?v=1 en el video obliga a cargar el archivo nuevo -->
-        <video id="vid" src="video.mp4?v=1.1" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
+        <!-- Forzamos el video a estar silenciado y con precarga para Android -->
+        <video id="vid" src="video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline muted></video>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0" id="target">
-        <!-- He puesto height="0.6", si el video se ve pequeño súbelo a 1 -->
-        <a-video src="#vid" width="1" height="0.6" position="0 0 0"></a-video>
+        <!-- Usamos shader: flat para que Android no gaste recursos en luces sobre el video -->
+        <a-video src="#vid" width="1" height="0.6" position="0 0 0" material="shader: flat"></a-video>
       </a-entity>
     </a-scene>
 
@@ -40,13 +42,24 @@
       const startBtn = document.querySelector("#start-btn");
       const overlay = document.querySelector("#overlay");
       const video = document.querySelector("#vid");
+      const status = document.querySelector("#status");
       const target = document.querySelector("#target");
 
       startBtn.addEventListener('click', () => {
-        overlay.style.display = "none";
-        // Esto "despierta" el video en Chrome/Safari normal
+        status.innerText = "Cargando video...";
+        
+        // Android requiere que el video se cargue explícitamente tras el clic
+        video.load();
+        
         video.play().then(() => {
-            video.pause();
+            status.innerText = "¡Listo! Apunta al cartel";
+            video.muted = false; // Intentamos activar sonido
+            setTimeout(() => { overlay.style.display = "none"; }, 1000);
+        }).catch(err => {
+            console.log("Error de reproducción, intentando en silencio...");
+            video.muted = true;
+            video.play();
+            overlay.style.display = "none";
         });
       });
 
