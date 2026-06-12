@@ -1,0 +1,71 @@
+﻿<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Librerías de MindAR y A-Frame -->
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+      /* Estilo para el botón de inicio */
+      #overlay {
+        position: absolute; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8);
+      }
+      #start-btn {
+        padding: 20px 40px; font-size: 18px; background: #E91E63; color: white; border: none; border-radius: 50px; cursor: pointer; font-family: sans-serif;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Pantalla inicial para dar permiso de usar cámara y sonido -->
+    <div id="overlay">
+      <button id="start-btn">ACTIVAR MEMORIA AUMENTADA</button>
+    </div>
+
+    <!-- Escena de Realidad Aumentada -->
+    <!-- Verifica que 'imageTargetSrc' sea igual al nombre de tu archivo .mind -->
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      
+      <a-assets>
+        <!-- Verifica que 'src' sea igual al nombre de tu video -->
+        <video id="vid" src="./video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline></video>
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <!-- Aquí es donde sucede la magia: al detectar el cartel (target 0), muestra el video -->
+      <a-entity mindar-image-target="targetIndex: 0" id="target">
+        <!-- Puedes ajustar width y height para que el video encaje con el tamaño de tu cartel -->
+        <a-video src="#vid" width="1" height="0.7" position="0 0 0"></a-video>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      const startBtn = document.querySelector("#start-btn");
+      const overlay = document.querySelector("#overlay");
+      const video = document.querySelector("#vid");
+      const target = document.querySelector("#target");
+
+      // Cuando el usuario toca el botón de inicio
+      startBtn.addEventListener('click', () => {
+        overlay.style.display = "none";
+        // En muchos celulares el video debe "pre-reproducirse" para que funcione
+        video.play();
+        video.pause();
+      });
+
+      // Cuando detecta el cartel
+      target.addEventListener("targetFound", () => {
+        console.log("Cartel detectado");
+        video.play();
+      });
+
+      // Cuando deja de ver el cartel
+      target.addEventListener("targetLost", () => {
+        console.log("Cartel perdido");
+        video.pause();
+      });
+    </script>
+  </body>
+</html>
