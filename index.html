@@ -8,68 +8,55 @@
       body { margin: 0; overflow: hidden; }
       #overlay {
         position: absolute; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%;
-        display: flex; flex-direction: column; align-items: center; justify-content: center; 
-        background: rgba(0,0,0,0.8); color: white; font-family: sans-serif;
+        display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8);
       }
-      #start-btn {
+      #btn {
         padding: 20px 40px; font-size: 18px; background: #FF007A; color: white; 
-        border: none; border-radius: 50px; cursor: pointer; font-weight: bold; margin-bottom: 10px;
+        border: none; border-radius: 50px; cursor: pointer; font-weight: bold; font-family: sans-serif;
       }
     </style>
   </head>
   <body>
     <div id="overlay">
-      <button id="start-btn">INICIAR EXPERIENCIA</button>
-      <p id="status">Esperando interacción...</p>
+      <button id="btn">VER MEMORIA AUMENTADA</button>
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-      
-      <a-assets>
-        <!-- Forzamos el video a estar silenciado y con precarga para Android -->
-        <video id="vid" src="video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline muted></video>
-      </a-assets>
+    <!-- Video oculto -->
+    <video id="web-video" src="video.mp4" preload="auto" loop playsinline webkit-playsinline muted style="display:none;"></video>
 
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0" id="target">
-        <!-- Usamos shader: flat para que Android no gaste recursos en luces sobre el video -->
-        <a-video src="#vid" width="1" height="0.6" position="0 0 0" material="shader: flat"></a-video>
+      <a-entity mindar-image-target="targetIndex: 0" id="objetivo">
+        <!-- AJUSTE DE PROPORCIONES VERTICALES -->
+        <!-- width="1" y height="1.77" es la proporción 9:16 (celular vertical) -->
+        <a-plane id="pantalla-video" 
+                 position="0 0 0" 
+                 width="1" 
+                 height="1.77" 
+                 material="src: #web-video; shader: flat;">
+        </a-plane>
       </a-entity>
     </a-scene>
 
     <script>
-      const startBtn = document.querySelector("#start-btn");
+      const btn = document.querySelector("#btn");
+      const video = document.querySelector("#web-video");
       const overlay = document.querySelector("#overlay");
-      const video = document.querySelector("#vid");
-      const status = document.querySelector("#status");
-      const target = document.querySelector("#target");
 
-      startBtn.addEventListener('click', () => {
-        status.innerText = "Cargando video...";
-        
-        // Android requiere que el video se cargue explícitamente tras el clic
-        video.load();
-        
+      btn.addEventListener('click', () => {
+        overlay.style.display = "none";
         video.play().then(() => {
-            status.innerText = "¡Listo! Apunta al cartel";
-            video.muted = false; // Intentamos activar sonido
-            setTimeout(() => { overlay.style.display = "none"; }, 1000);
-        }).catch(err => {
-            console.log("Error de reproducción, intentando en silencio...");
-            video.muted = true;
-            video.play();
-            overlay.style.display = "none";
+          video.muted = false;
+        }).catch(() => {
+          video.muted = true;
+          video.play();
         });
       });
 
-      target.addEventListener("targetFound", () => {
-        video.play();
-      });
-
-      target.addEventListener("targetLost", () => {
-        video.pause();
-      });
+      const target = document.querySelector("#objetivo");
+      target.addEventListener("targetFound", () => { video.play(); });
+      target.addEventListener("targetLost", () => { video.pause(); });
     </script>
   </body>
 </html>
