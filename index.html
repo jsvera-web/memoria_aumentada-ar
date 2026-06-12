@@ -2,40 +2,36 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Librerías de Realidad Aumentada -->
     <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-    
     <style>
       body { margin: 0; overflow: hidden; }
-      /* Pantalla de inicio para activar sonido y cámara */
       #overlay {
         position: absolute; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%;
         display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8);
       }
       #start-btn {
-        padding: 20px 40px; font-size: 18px; background: #FF007A; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
+        padding: 20px 40px; font-size: 18px; background: #FF007A; color: white; border: none; border-radius: 50px; cursor: pointer; font-family: sans-serif;
       }
     </style>
   </head>
   <body>
     <div id="overlay">
-      <button id="start-btn">INICIAR MEMORIA AUMENTADA</button>
+      <button id="start-btn">INICIAR EXPERIENCIA</button>
     </div>
 
-    <!-- Escena de Realidad Aumentada -->
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <!-- El ?v=1 en el .mind obliga a cargar la versión actual -->
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind?v=1.1;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <!-- Referencia al archivo de video corregido -->
-        <video id="vid" src="video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
+        <!-- El ?v=1 en el video obliga a cargar el archivo nuevo -->
+        <video id="vid" src="video.mp4?v=1.1" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Cuando se detecta el cartel (targetIndex: 0) -->
       <a-entity mindar-image-target="targetIndex: 0" id="target">
-        <!-- Ajustamos el ancho (1) y el alto (0.6) según un video rectangular estándar -->
+        <!-- He puesto height="0.6", si el video se ve pequeño súbelo a 1 -->
         <a-video src="#vid" width="1" height="0.6" position="0 0 0"></a-video>
       </a-entity>
     </a-scene>
@@ -46,23 +42,18 @@
       const video = document.querySelector("#vid");
       const target = document.querySelector("#target");
 
-      // Paso 1: El usuario debe tocar la pantalla para dar permiso de audio/video
       startBtn.addEventListener('click', () => {
         overlay.style.display = "none";
-        // Desbloqueamos el video para el navegador
+        // Esto "despierta" el video en Chrome/Safari normal
         video.play().then(() => {
-            video.pause(); 
-            console.log("Video listo para reproducir");
+            video.pause();
         });
       });
 
-      // Paso 2: Cuando la cámara reconoce el cartel físico
       target.addEventListener("targetFound", () => {
-        console.log("Cartel detectado");
         video.play();
       });
 
-      // Paso 3: Cuando se pierde de vista el cartel
       target.addEventListener("targetLost", () => {
         video.pause();
       });
